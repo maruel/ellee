@@ -5,7 +5,7 @@ light:
     effects:
       - addressable_lambda:
           name: "30s count down"
-          update_interval: 16ms
+          update_interval: 100ms
           lambda: |-
             // Timer in seconds:
             const int duration = 30;
