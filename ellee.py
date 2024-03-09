@@ -86,7 +86,7 @@ ElleeLight it;
 bool g_initial_run = true;
 
 void setup() {
-  printf("Running %%s/%%s:\n", "%(COMPONENTNAME)s", "%(EFFECTNAME)s");
+  printf("Effect %%s:\n", "%(EFFECTNAME)s");
 }
 
 void loop() {
@@ -100,32 +100,31 @@ void loop() {
 def escape(r):
   return r.replace("\\", "\\\\").replace("\"", "\\\"")
 
-def generate_effect(esphome, slow, componentname, numlights, effectname, interval, code):
-  print("Compiling effect %s on item %r" % (effectname, componentname))
-  if slow:
-    interval = 500
-  elif not interval:
-    interval = "32"
+def generate_effect(esphome, outdir, min_interval, componentname, numlights, effectname, interval, code):
+  exe = os.path.join(outdir, effectname.translate(str.maketrans({x: "_" for x in " []{}\\/^$*?"})))
+  print("Compiling effect \"%s/%s\" to %s " % (componentname, effectname, exe))
+  if not interval:
+    interval = 50
   elif interval.endswith("ms"):
     interval = int(interval[:-2])
   elif interval.endswith("s"):
     interval = int(interval[:-1]) * 1000
   else:
     raise Exception("Unknown interval")
+  interval = max(min_interval, interval)
 
   keys = {
-      "COMPONENTNAME": escape(componentname),
       "EFFECTNAME": escape(effectname),
       "NUMLIGHTS": int(numlights),
       "INTERVAL": interval,
   }
-  with open("run.cc", "wt") as f:
+  with open(exe+".cc", "wt") as f:
     f.write(HEADER % keys)
     f.write(textwrap.indent(code.rstrip(), "  "))
     f.write(FOOTER % keys)
   # We need to inject a little bit of code.
   files = [
-      "run.cc",
+      exe+".cc",
       os.path.join(esphome, "esphome/components/host/core.cpp"),
       os.path.join(esphome, "esphome/components/host/preferences.cpp"),
       os.path.join(esphome, "esphome/components/light/addressable_light.cpp"),
@@ -141,17 +140,17 @@ def generate_effect(esphome, slow, componentname, numlights, effectname, interva
       os.path.join(esphome, "esphome/core/helpers.cpp"),
       os.path.join(esphome, "esphome/core/scheduler.cpp"),
   ]
-  subprocess.check_call(["g++", "-ggdb", "-DUSE_HOST", "-I.", "-I" + esphome] + files)
-  print("Run ./a.out or gdb ./a.out if you are diagnosing a crash")
+  subprocess.check_call(["g++", "-ggdb", "-o", exe, "-DUSE_HOST", "-I.", "-I" + esphome] + files)
+  print(f"Run \"{exe}\" or \"gdb {exe}\" to diagnose a crash")
 
-def parse_light(esphome, slow, item):
+def parse_light(esphome, outdir, min_interval, item):
   if "effects" not in item:
     return
   for e in item["effects"]:
     for t, data in e.items():
       if t != "addressable_lambda":
         continue
-      generate_effect(esphome, slow, item["name"], item["num_leds"], data["name"],
+      generate_effect(esphome, outdir, min_interval, item["name"], item["num_leds"], data["name"],
                       data["update_interval"], data["lambda"])
 
 def main():
@@ -166,7 +165,10 @@ def main():
       metavar="path/to/esphome.git",
       help="Path to esphome source code")
   parser.add_argument(
-      "--slow", action="store_true", help="Slows down update interval to once per 500ms")
+      "--outdir", default=".", metavar=".",
+      help="Directory to store generated source and executabe")
+  parser.add_argument(
+      "--interval", type=int, default=0, help="Minimal interval in ms to use")
   args = parser.parse_args()
   if not os.path.isfile(os.path.join(args.esphome, "esphome", "core", "color.cpp")):
     print("--esphome must point to a checkout of https://github.com/esphome/esphome", file=sys.stderr)
@@ -174,9 +176,9 @@ def main():
   # Use BaseLoader to not have to resolve !include.
   data = yaml.load(args.file, Loader=yaml.BaseLoader)
   for item in data.get("display", []):
-    parse_light(args.esphome, args.slow, item)
+    parse_light(args.esphome, args.outdir, args.interval, item)
   for item in data.get("light", []):
-    parse_light(args.esphome, args.slow, item)
+    parse_light(args.esphome, args.outdir, args.interval, item)
   return 0
 
 if __name__ == "__main__":

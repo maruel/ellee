@@ -20,7 +20,7 @@ Crank these animations! ⏩
 ```
 git clone https://github.com/esphome/esphome ../esphome
 ./ellee.py --esphome ../esphome sample.yaml
-./a.out
+./30s_count_down
 ```
 
 Ctrl-C out to stop the animation.
