@@ -1,0 +1,40 @@
+light:
+  - name: "Timer"
+    platform: spi_led_strip
+    num_leds: 27
+    effects:
+      - addressable_lambda:
+          name: "30s count down"
+          update_interval: 16ms
+          lambda: |-
+            // Timer in seconds:
+            const int duration = 30;
+            // Almost out in seconds:
+            const int nearlydone = 3;
+            const int scrollbar = duration-nearlydone;
+            static int start;
+            if (initial_run) {
+              start = millis();
+            }
+
+            if (((millis() - start) / 1000) >= duration) {
+              start = millis();
+            }
+            int sincems = millis() - start;
+            if ((sincems/1000) >= scrollbar) {
+              // Almost done. Flash red at 250ms.
+              if ((sincems/250) & 1) {
+                it.all() = Color(255, 0, 0);
+              } else {
+                it.all() = Color(0, 0, 0);
+              }
+            } else {
+              int l = it.size();
+              int v = (l * sincems / 1000 / scrollbar);
+              for (int i = 0; i < v; i++) {
+                it[i%l] = Color(255, 0, 0);
+              }
+              for (int i = v; i < l; i++) {
+                it[i%l] = Color(0, 255, 0);
+              }
+            }
