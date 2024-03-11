@@ -1,5 +1,7 @@
 light:
-  - effects:
+  - gamma_correct: 0
+    default_transition_length: 0s
+    effects:
       - addressable_lambda:
           lambda: |-
             // Precalculate a linear approximation of an ASRD (attack + sustain

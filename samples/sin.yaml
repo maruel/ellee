@@ -1,5 +1,7 @@
 light:
-  - num_leds: 256
+  - gamma_correct: 0
+    default_transition_length: 0s
+    num_leds: 256
     effects:
       - addressable_lambda:
           name: "half_sin8"

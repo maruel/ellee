@@ -2,6 +2,8 @@ light:
   - name: "Timer"
     platform: spi_led_strip
     num_leds: 27
+    gamma_correct: 0
+    default_transition_length: 0s
     effects:
       - addressable_lambda:
           name: "30s count down"

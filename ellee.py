@@ -218,13 +218,15 @@ def main():
   if not shutil.which("g++"):
     print("Install g++ first", file=sys.stderr)
     return 1
+  esphomekwargs = {"required": True}
+  if os.path.isdir("../esphome") and os.path.isfile(os.path.join("..", "esphome", "esphome", "core", "color.cpp")):
+    esphomekwargs = {"default": os.path.join("..", "esphome")}
   parser = argparse.ArgumentParser(description=sys.modules[__name__].__doc__)
   parser.add_argument(
       "file", type=argparse.FileType("r"), help="esphome yaml file to parse")
   parser.add_argument(
-      "--esphome", required=True,
-      metavar="path/to/esphome.git",
-      help="Path to esphome source code")
+      "--esphome", metavar="path/to/esphome.git",
+      help="Path to esphome source code", **esphomekwargs)
   parser.add_argument(
       "--outdir", default=".", metavar=".",
       help="Directory to store generated source and executabe")

@@ -28,11 +28,11 @@ git clone https://github.com/esphome/esphome ../esphome
 
 # A simple count down timer that can be used in meetings to alert partitipant
 # that time is up.
-./ellee.py --esphome ../esphome samples/timer.yaml
+./ellee.py samples/timer.yaml
 ./30s_count_down
 
 # Compare different sinus implementations by looking that the raw values in HEX.
-./ellee.py --esphome ../esphome --as-hex --once samples/sin.yaml
+./ellee.py --as-hex --once samples/sin.yaml
 ./half_sin8
 ./sin16_c
 ./sinf
