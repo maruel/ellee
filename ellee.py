@@ -181,7 +181,8 @@ def generate_effect(
   ]
   try:
     subprocess.check_call(["g++", "-ggdb", "-o", exe, "-DUSE_HOST", "-I.", "-I" + esphome] + files)
-  except subprocess.CalledProcessError:
+  except subprocess.CalledProcessError as e:
+    print("Compilation failed:", e, file=sys.stderr)
     return False
   print(f"Run \"{exe}\" or \"gdb {exe}\" to diagnose a crash")
   return True

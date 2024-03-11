@@ -52,7 +52,7 @@ def run(esphome, name, effects):
         [sys.executable, "ellee.py", name, "--once", "--outdir", tmpdir, "--esphome", esphome, "--as-hex"])
     if effects is None:
       # Skipping for now, e.g. non-determinism.
-      return
+      return True
     # Make sure the generated source files and executables match the
     # expectations.
     want = set(list(effects) + list(e + ".cc" for e in effects))
@@ -65,7 +65,7 @@ def run(esphome, name, effects):
       missing = want - got
       if missing:
         print(f"Expectations without effect: {', '.join(missing)}", file=sys.stderr)
-      return True
+      return False
     # Run each effect.
     for execname, want in effects.items():
       got = subprocess.check_output([os.path.join(tmpdir, execname)])
@@ -73,7 +73,12 @@ def run(esphome, name, effects):
         print("Want: %r" % want, file=sys.stderr)
         print("Got : %r" % got, file=sys.stderr)
         return False
-  except subprocess.CalledProcessError:
+  except subprocess.CalledProcessError as e:
+    print("Failed:", e, file=sys.stderr)
+    if e.output:
+      print(e.output, file=sys.stderr)
+    if e.stderr:
+      print(e.stderr, file=sys.stderr)
     return False
   finally:
     shutil.rmtree(tmpdir)
@@ -93,10 +98,9 @@ def main():
   esphome = "../esphome"
   threads = []
   for sample, effects in EXPECTATIONS.items():
-    t = threading.Thread(
-        target=run,
-        args=(esphome, os.path.join("samples", sample), effects))
+    t = Thread(target=run, args=(esphome, os.path.join("samples", sample), effects))
     t.start()
+    threads.append(t)
   for t in threads:
     t.join()
   return int(not (min(t.returned for t in threads) if threads else False))
