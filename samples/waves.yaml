@@ -1,0 +1,30 @@
+light:
+  - effects:
+      - addressable_lambda:
+          lambda: |-
+            const auto now = millis();
+            const auto leds = it.size();
+            const auto wavefreq = 0.0002f;
+            const auto wavelength = 0.3f * M_PIf/leds;
+            const auto waveoffset = wavefreq * now;
+            const auto baselength = M_PIf/leds;
+
+            for (int i = 0; i < leds; i++) {
+              // Base glow.
+              int32_t baseglow = 200.f*sinf(baselength*i)+55.5f;
+              int32_t r = baseglow;
+              int32_t g = baseglow;
+              int32_t b = baseglow;
+
+              // Additive blue wave.
+              int32_t wavei = 255.f*sinf(wavelength*i + waveoffset)+0.5f;
+              if (wavei < 0) {
+                wavei = 0;
+              }
+              b += wavei;
+              if (b > 255) {
+                b = 255;
+              }
+              it[i].set(Color(r, g, b));
+            }
+

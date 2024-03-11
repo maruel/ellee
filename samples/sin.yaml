@@ -27,7 +27,21 @@ light:
             // desktop class CPU will not provide meaningful results since the
             // ESP32 doesn't have floating acceleration.
             const auto leds = it.size();
+            const auto factor = M_PIf/leds;
             for (int i = 0; i < leds; i++) {
-              auto v = sinf(i*M_PIf/leds);
-              it[i].set(Color(255.f*v, 255.f*v, 255.f*v));
+              auto c = (uint8_t)(255.f*sinf(factor*i));
+              it[i].set(Color(c, c, c));
+            }
+      - addressable_lambda:
+          name: "sinf_saturated"
+          lambda: |-
+            // floating point based sin calculation. Benchmarking this on a
+            // desktop class CPU will not provide meaningful results since the
+            // ESP32 doesn't have floating acceleration.
+            const auto leds = it.size();
+            const auto factor = M_PIf/leds;
+            for (int i = 0; i < leds; i++) {
+              // Saturate the output significantly more with the +0.5f bump.
+              auto c = (uint8_t)(255.f*sinf(factor*i)+0.5f);
+              it[i].set(Color(c, c, c));
             }

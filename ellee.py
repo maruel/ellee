@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import threading
 
 import yaml
 
@@ -167,19 +168,29 @@ def generate_effect(
   print(f"Run \"{exe}\" or \"gdb {exe}\" to diagnose a crash")
 
 def parse_light(esphome, outdir, min_interval, one_per_line, as_hex,
-                show_millis, once, component):
+                show_millis, once, filename, component):
   if "effects" not in component:
     return
+  threads = []
   for effectentry in component["effects"]:
     for effecttype, effectdata in effectentry.items():
       if effecttype != "addressable_lambda":
         continue
-      generate_effect(
-          esphome, outdir,
-          min_interval, one_per_line, as_hex, show_millis, once,
-          component.get("name", "unamed"), component.get("num_leds", 70),
-          effectdata.get("name", "unnamed"),
-          effectdata.get("update_interval", "100ms"), effectdata["lambda"])
+      componentname = component.get("name") or os.path.basename(filename).rsplit(".", 2)[0]
+      effeectname = effectdata.get("name") or componentname
+      t = threading.Thread(
+          target=generate_effect,
+          args=(
+              esphome, outdir,
+              min_interval, one_per_line, as_hex, show_millis, once,
+              componentname, component.get("num_leds", 70),
+              effeectname,
+              effectdata.get("update_interval", "100ms"),
+              effectdata["lambda"]))
+      t.start()
+      threads.append(t)
+  for t in threads:
+    t.join()
 
 def main():
   # TODO(maruel): Make it nice for Windows and macOS users.
@@ -216,9 +227,16 @@ def main():
     return 1
   # Use BaseLoader to not have to resolve !include.
   data = yaml.load(args.file, Loader=yaml.BaseLoader)
+  threads = []
   for item in data.get("light", []):
-    parse_light(args.esphome, args.outdir, args.interval, args.one_per_line,
-                args.as_hex, args.show_millis, args.once, item)
+    t = threading.Thread(
+        target=parse_light,
+        args=(args.esphome, args.outdir, args.interval, args.one_per_line,
+              args.as_hex, args.show_millis, args.once, args.file.name, item))
+    t.start()
+    threads.append(t)
+  for t in threads:
+    t.join()
   return 0
 
 if __name__ == "__main__":
