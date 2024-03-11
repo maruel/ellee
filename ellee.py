@@ -53,29 +53,41 @@ class ElleeLight : public esphome::light::AddressableLight {
     }
     virtual void write_state(esphome::light::LightState *state) {
       // Switch to help debugging.
-      write_ansi();
-      //write_hex();
+      if (%(AS_HEX)s) {
+        write_hex();
+      } else {
+        write_ansi();
+      }
+      fflush(stdout);
     }
     void write_ansi() {
       printf("\r");
       printf("\x1b[0m");
-      //printf("%%- 11d ", esphome::millis());
+      if (%(SHOW_MILLIS)s) {
+        printf("%%- 11d ", esphome::millis());
+      }
       for (int i = 0; i < size(); i++) {
         printf("\x1b[38;2;%%d;%%d;%%dm\u2588", pixels_[3*i], pixels_[3*i+1], pixels_[3*i+2]);
       }
       printf("\x1b[0m");
-      //printf("\n");
+      if (%(ONE_PER_LINE)s) {
+        printf("\n");
+      }
     }
     void write_hex() {
       printf("\r");
-      //printf("%%- 11d ", esphome::millis());
+      if (%(SHOW_MILLIS)s) {
+        printf("%%- 11d ", esphome::millis());
+      }
       for (int i = 0; i < size(); i++) {
         printf("%%02x%%02x%%02x", pixels_[3*i], pixels_[3*i+1], pixels_[3*i+2]);
         if (i != size()-1) {
           printf(" ");
         }
       }
-      //printf("\n");
+      if (%(ONE_PER_LINE)s) {
+        printf("\n");
+      }
     }
 
     mutable uint8_t pixels_[3*%(NUMLIGHTS)d];
@@ -100,7 +112,10 @@ void loop() {
 def escape(r):
   return r.replace("\\", "\\\\").replace("\"", "\\\"")
 
-def generate_effect(esphome, outdir, min_interval, componentname, numlights, effectname, interval, code):
+def generate_effect(
+    esphome, outdir,
+    min_interval, one_per_line, as_hex, show_millis,
+    componentname, numlights, effectname, interval, code):
   exe = os.path.join(outdir, effectname.translate(str.maketrans({x: "_" for x in " []{}\\/^$*?"})))
   print("Compiling effect \"%s/%s\" to %s " % (componentname, effectname, exe))
   if not interval:
@@ -115,8 +130,11 @@ def generate_effect(esphome, outdir, min_interval, componentname, numlights, eff
 
   keys = {
       "EFFECTNAME": escape(effectname),
-      "NUMLIGHTS": int(numlights),
       "INTERVAL": interval,
+      "NUMLIGHTS": int(numlights),
+      "ONE_PER_LINE": str(one_per_line).lower(),
+      "AS_HEX": str(as_hex).lower(),
+      "SHOW_MILLIS": str(show_millis).lower(),
   }
   with open(exe+".cc", "wt") as f:
     f.write(HEADER % keys)
@@ -143,15 +161,19 @@ def generate_effect(esphome, outdir, min_interval, componentname, numlights, eff
   subprocess.check_call(["g++", "-ggdb", "-o", exe, "-DUSE_HOST", "-I.", "-I" + esphome] + files)
   print(f"Run \"{exe}\" or \"gdb {exe}\" to diagnose a crash")
 
-def parse_light(esphome, outdir, min_interval, item):
+def parse_light(esphome, outdir, min_interval, one_per_line, as_hex,
+                show_millis, item):
   if "effects" not in item:
     return
   for e in item["effects"]:
     for t, data in e.items():
       if t != "addressable_lambda":
         continue
-      generate_effect(esphome, outdir, min_interval, item["name"], item["num_leds"], data["name"],
-                      data["update_interval"], data["lambda"])
+      generate_effect(
+          esphome, outdir,
+          min_interval, one_per_line, as_hex, show_millis,
+          item["name"], item["num_leds"], data["name"],
+          data["update_interval"], data["lambda"])
 
 def main():
   if not shutil.which("g++"):
@@ -169,6 +191,15 @@ def main():
       help="Directory to store generated source and executabe")
   parser.add_argument(
       "--interval", type=int, default=0, help="Minimal interval in ms to use")
+  parser.add_argument(
+      "--show-millis", action="store_true",
+      help="Display time in millis before the colors")
+  parser.add_argument(
+      "--as-hex", action="store_true",
+      help="Display hex values instead of using ANSI colors")
+  parser.add_argument(
+      "--one-per-line", action="store_true",
+      help="Draw each update on a new line")
   args = parser.parse_args()
   if not os.path.isfile(os.path.join(args.esphome, "esphome", "core", "color.cpp")):
     print("--esphome must point to a checkout of https://github.com/esphome/esphome", file=sys.stderr)
@@ -176,9 +207,11 @@ def main():
   # Use BaseLoader to not have to resolve !include.
   data = yaml.load(args.file, Loader=yaml.BaseLoader)
   for item in data.get("display", []):
-    parse_light(args.esphome, args.outdir, args.interval, item)
+    parse_light(args.esphome, args.outdir, args.interval, args.one_per_line,
+                args.as_hex, args.show_millis, item)
   for item in data.get("light", []):
-    parse_light(args.esphome, args.outdir, args.interval, item)
+    parse_light(args.esphome, args.outdir, args.interval, args.one_per_line,
+                args.as_hex, args.show_millis, item)
   return 0
 
 if __name__ == "__main__":
