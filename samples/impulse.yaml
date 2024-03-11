@@ -1,11 +1,12 @@
 light:
-  - effects:
+  - num_leds: 256
+    effects:
       - addressable_lambda:
           lambda: |-
             // Precalculate a linear approximation of an ASRD (attack + sustain
             // + release + decay) impulse to reuse in following animation as a
             // table lookup. Settings:
-            const int max = 100;
+            const int max = 255;
             const int attack = 10;
             const int sustain = 10;
             const int release = 80;
@@ -36,31 +37,7 @@ light:
               }
             }
 
-            // Constants.
-            const auto now = millis();
             const auto leds = it.size();
-            const auto wavefreq = 0.0002f;
-            const auto wavelength = 0.3f * M_PIf/leds;
-            const auto waveoffset = wavefreq * now;
-            const auto baselength = M_PIf/leds;
-
             for (int i = 0; i < leds; i++) {
-              // Base glow.
-              int32_t baseglow = 200.f*sinf(baselength*i)+55.5f;
-              int32_t r = baseglow;
-              int32_t g = baseglow;
-              int32_t b = baseglow;
-
-              // Additive blue wave.
-              //int32_t wavei = 120.f*sinf(wavelength*i + waveoffset)+0.5f;
-              //if (wavei < 0) {
-              //  wavei = 0;
-              //}
-              int32_t wavei = impulse[(now/50 + i)%sizeof(impulse)];
-              b += wavei;
-              if (b > 255) {
-                b = 255;
-              }
-              it[i].set(Color(r, g, b));
+              it[i].set(Color(impulse[i], impulse[i], impulse[i]));
             }
-
