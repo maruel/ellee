@@ -4,39 +4,22 @@ light:
     effects:
       - addressable_lambda:
           lambda: |-
-            // Precalculate a linear approximation of an ASRD (attack + sustain
-            // + release + decay) impulse to reuse in following animation as a
-            // table lookup. Settings:
-            const int max = 100;
-            const int attack = 10;
-            const int sustain = 10;
-            const int release = 80;
-            const int releaselevel = 30;
-            static uint8_t impulse[256];
-            // Do not use initial_run otherwise this would be recalculated every
-            // single time this effect is started.
-            if (impulse[1] == 0) {
-              const auto remainder = sizeof(impulse) - attack - sustain - release;
-              for (int i = 0; i < sizeof(impulse); i++) {
-                auto v = i;
-                if (v < attack) {
-                  impulse[i] = (v+1) * max / (attack+1);
-                  continue;
-                }
-                v -= attack;
-                if (v < sustain) {
-                  impulse[i] = max;
-                  continue;
-                }
-                v -= sustain;
-                if (v < release) {
-                  impulse[i] = ((max-releaselevel) * (release-v) / release) + releaselevel;
-                  continue;
-                }
-                v -= release;
-                impulse[i] = releaselevel * (remainder-v) / remainder;
+            // See impulse.yaml for more details.
+            auto impulse = [](auto index, int max = 100, int attack = 10, int sustain = 10, int release = 80, int releaselevel = 30, int remainder = 156) {
+              if (index < attack) {
+                return (index+1) * max / (attack+1);
               }
-            }
+              index -= attack;
+              if (index < sustain) {
+                return max;
+              }
+              index -= sustain;
+              if (index < release) {
+                return ((max-releaselevel) * (release-index) / release) + releaselevel;
+              }
+              index -= release;
+              return releaselevel * (remainder-index) / remainder;
+            };
 
             // Constants.
             const auto now = millis();
@@ -58,7 +41,7 @@ light:
               //if (wavei < 0) {
               //  wavei = 0;
               //}
-              int32_t wavei = impulse[(now/50 + i)%sizeof(impulse)];
+              int32_t wavei = impulse((now/50 + i)%256);
               b += wavei;
               if (b > 255) {
                 b = 255;

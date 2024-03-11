@@ -4,9 +4,36 @@ light:
     default_transition_length: 0s
     effects:
       - addressable_lambda:
+          name: "Impulse"
+          lambda: |-
+            // A linear approximation of an ASRD (attack + sustain + release
+            // + decay) impulse to use in an animation as a lambda.
+            auto impulse = [](auto index, int max = 255, int attack = 10, int sustain = 10, int release = 80, int releaselevel = 30, int remainder = 156) {
+              if (index < attack) {
+                return (index+1) * max / (attack+1);
+              }
+              index -= attack;
+              if (index < sustain) {
+                return max;
+              }
+              index -= sustain;
+              if (index < release) {
+                return ((max-releaselevel) * (release-index) / release) + releaselevel;
+              }
+              index -= release;
+              return releaselevel * (remainder-index) / remainder;
+            };
+
+            const auto leds = it.size();
+            for (int i = 0; i < leds; i++) {
+              auto v = impulse(i);
+              it[i].set(Color(v, v, v));
+            }
+      - addressable_lambda:
+          name: "Precomputed impulse"
           lambda: |-
             // Precalculate a linear approximation of an ASRD (attack + sustain
-            // + release + decay) impulse to reuse in following animation as a
+            // + release + decay) impulse to use in an animation as a
             // table lookup. Settings:
             const int max = 255;
             const int attack = 10;
