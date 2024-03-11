@@ -147,6 +147,7 @@ def generate_effect(
       os.path.join(esphome, "esphome/components/host/preferences.cpp"),
       os.path.join(esphome, "esphome/components/light/addressable_light.cpp"),
       os.path.join(esphome, "esphome/components/light/esp_color_correction.cpp"),
+      os.path.join(esphome, "esphome/components/light/esp_hsv_color.cpp"),
       os.path.join(esphome, "esphome/components/light/esp_range_view.cpp"),
       os.path.join(esphome, "esphome/components/light/light_call.cpp"),
       os.path.join(esphome, "esphome/components/light/light_output.cpp"),
