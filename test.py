@@ -27,11 +27,18 @@ EXPECTATIONS = {
     "timer.yaml": {
       "30s_count_down": b'\r00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00\n',
 		},
-    # Disabled until we can mock millis().
-    "waves.yaml": None,
+    "waves.yaml": {
+      "waves": b'\r373738 404043 49494d 525258 5b5b62 64646d 6c6c77 757581 7d7d8b 868696 8e8e9f 9696a9 9e9eb2 a5a5bb adadc4 b4b4cd bbbbd6 c1c1dd c8c8e6 ceceed d3d3f4 d9d9fb dedeff e3e3ff e7e7ff ebebff efefff f2f2ff f5f5ff f8f8ff fafaff fcfcff fdfdff fefeff ffffff ffffff ffffff fefeff fdfdff fcfcff fafaff f8f8ff f5f5ff f2f2ff efefff ebebff e7e7ff e3e3ff dedeff d9d9ff d3d3ff ceceff c8c8ff c1c1ff bbbbff b4b4ff adadff a5a5f9 9e9ef3 9696ec 8e8ee5 8686df 7d7dd7 7575d0 6c6cc8 6464c1 5b5bb9 5252b1 4949a9 4040a1\n',
+    },
 }
 
-FAILED = threading.Event()
+class Thread(threading.Thread):
+  def __init__(self, **kwargs):
+    self.returned = None
+    oldtarget = kwargs.pop("target")
+    def hook(*args, **kwargs):
+      self.returned = oldtarget(*args, **kwargs)
+    super().__init__(target=hook, **kwargs)
 
 def run(esphome, name, effects):
   print(name)
@@ -55,18 +62,19 @@ def run(esphome, name, effects):
       missing = want - got
       if missing:
         print(f"Expectations without effect: {', '.join(missing)}", file=sys.stderr)
-      FAILED.set()
-      return
+      return True
     # Run each effect.
     for execname, want in effects.items():
       got = subprocess.check_output([os.path.join(tmpdir, execname)])
       if got != want:
         print("Want: %r" % want, file=sys.stderr)
         print("Got : %r" % got, file=sys.stderr)
-        FAILED.set()
-        return
+        return False
+  except subprocess.CalledProcessError:
+    return False
   finally:
     shutil.rmtree(tmpdir)
+  return True
 
 def main():
   actual = set(glob.glob("samples/*.yaml"))
@@ -86,10 +94,9 @@ def main():
         target=run,
         args=(esphome, os.path.join("samples", sample), effects))
     t.start()
-
   for t in threads:
     t.join()
-  return int(FAILED.is_set())
+  return int(not (min(t.returned for t in threads) if threads else False))
 
 if __name__ == "__main__":
   sys.exit(main())

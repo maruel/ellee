@@ -17,7 +17,7 @@ light:
               int32_t b = baseglow;
 
               // Additive blue wave.
-              int32_t wavei = 255.f*sinf(wavelength*i + waveoffset)+0.5f;
+              int32_t wavei = 120.f*sinf(wavelength*i + waveoffset)+0.5f;
               if (wavei < 0) {
                 wavei = 0;
               }
