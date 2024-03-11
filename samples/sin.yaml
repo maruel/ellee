@@ -1,0 +1,33 @@
+light:
+  - num_leds: 256
+    effects:
+      - addressable_lambda:
+          name: "half_sin8"
+          lambda: |-
+            // Highest performance 8 bits sinf() equivalent at significantly
+            // lower quality.
+            const auto leds = it.size();
+            for (int i = 0; i < leds; i++) {
+              auto v = 2*half_sin8(i);
+              it[i].set(Color(v, v, v));
+            }
+      - addressable_lambda:
+          name: "sin16_c"
+          lambda: |-
+            // High performance 16 bits sinf() equivalent at reasonable quality.
+            const auto leds = it.size();
+            for (int i = 0; i < leds; i++) {
+              auto v = sin16_c(i*32767/leds);
+              it[i].set(Color(v>>7, v>>7, v>>7));
+            }
+      - addressable_lambda:
+          name: "sinf"
+          lambda: |-
+            // floating point based sin calculation. Benchmarking this on a
+            // desktop class CPU will not provide meaningful results since the
+            // ESP32 doesn't have floating acceleration.
+            const auto leds = it.size();
+            for (int i = 0; i < leds; i++) {
+              auto v = sinf(i*M_PIf/leds);
+              it[i].set(Color(255.f*v, 255.f*v, 255.f*v));
+            }

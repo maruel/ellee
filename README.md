@@ -1,9 +1,10 @@
 # Esphome Lambda Light Effect Emulator (ellee)
 
-Creating a new effect for an addressable light in esphome can be tedious. You
-try a new tweak, compile, upload, have the device reboot, then switch the effect
-on ... just to realize nothing happens because the esp8266 or esp32 crashed. 😩
-It's really hard to debug when a lambda causes a crash! 💣
+Creating a new effect for an addressable light in esphome can be tedious. To try
+a new lambda you just created, you have to compile, upload, have the device
+reboot, then switch the effect on ... just to realize nothing happens because
+the esp8266 or esp32 crashed. 😩 It's really hard to debug when a lambda causes
+a crash! 💣
 
 What about emulating the effect on your local terminal instead and be able to
 debug locally? This project does exactly that! 🎉
@@ -17,10 +18,30 @@ Crank these animations! ⏩
 
 ## Usage
 
+ellee requires a esphome.git checkout to get the C++ source files to build your
+lambda. Then pass both the path to esphome.git and your esphome yaml file
+containing a `addressable_lambda` to generate an executable that will output the
+effect at the terminal when run. For example:
+
 ```
 git clone https://github.com/esphome/esphome ../esphome
-./ellee.py --esphome ../esphome sample.yaml
+
+# A simple count down timer that can be used in meetings to alert partitipant
+# that time is up.
+./ellee.py --esphome ../esphome samples/timer.yaml
 ./30s_count_down
+
+# Compare different sinus implementations by looking that the raw values in HEX.
+./ellee.py --esphome ../esphome --as-hex --once samples/sin.yaml
+./half_sin8
+./sin16_c
+./sinf
 ```
 
 Ctrl-C out to stop the animation.
+
+## Tips
+
+Explore the [samples/](samples/) directory for ideas how to make the best use of
+this tool. ellee tolerates underspecified effect (e.g.
+[`print_then_exit.yaml`](samples/print_then_exit.yaml)) for quicker iteration.

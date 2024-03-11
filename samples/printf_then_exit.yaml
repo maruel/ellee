@@ -1,0 +1,8 @@
+light:
+  - effects:
+      - addressable_lambda:
+          lambda: |-
+            // Example of how to debug a calculation you are unsure about:
+            const auto v = half_sin8(128);
+            printf("%d\n", v);
+            exit(0);
