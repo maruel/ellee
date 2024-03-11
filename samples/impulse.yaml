@@ -8,9 +8,9 @@ light:
           lambda: |-
             // A linear approximation of an ASRD (attack + sustain + release
             // + decay) impulse to use in an animation as a lambda.
-            auto impulse = [](auto index, int max = 255, int attack = 10, int sustain = 10, int release = 80, int releaselevel = 30, int remainder = 156) {
+            auto impulse = [](uint16_t index, uint16_t max = 255, uint16_t attack = 10, uint16_t sustain = 10, uint16_t release = 80, uint16_t releaselevel = 30, uint16_t remainder = 156) {
               if (index < attack) {
-                return (index+1) * max / (attack+1);
+                return uint16_t((index+1) * max / (attack+1));
               }
               index -= attack;
               if (index < sustain) {
@@ -18,10 +18,10 @@ light:
               }
               index -= sustain;
               if (index < release) {
-                return ((max-releaselevel) * (release-index) / release) + releaselevel;
+                return (uint16_t)(((max-releaselevel) * (release-index) / release) + releaselevel);
               }
               index -= release;
-              return releaselevel * (remainder-index) / remainder;
+              return (uint16_t)(releaselevel * (remainder-index) / remainder);
             };
 
             const auto leds = it.size();

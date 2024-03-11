@@ -5,9 +5,9 @@ light:
       - addressable_lambda:
           lambda: |-
             // See impulse.yaml for more details.
-            auto impulse = [](auto index, int max = 100, int attack = 10, int sustain = 10, int release = 80, int releaselevel = 30, int remainder = 156) {
+            auto impulse = [](uint16_t index, uint16_t max = 100, uint16_t attack = 10, uint16_t sustain = 10, uint16_t release = 80, uint16_t releaselevel = 30, uint16_t remainder = 156) {
               if (index < attack) {
-                return (index+1) * max / (attack+1);
+                return uint16_t((index+1) * max / (attack+1));
               }
               index -= attack;
               if (index < sustain) {
@@ -15,10 +15,10 @@ light:
               }
               index -= sustain;
               if (index < release) {
-                return ((max-releaselevel) * (release-index) / release) + releaselevel;
+                return (uint16_t)(((max-releaselevel) * (release-index) / release) + releaselevel);
               }
               index -= release;
-              return releaselevel * (remainder-index) / remainder;
+              return (uint16_t)(releaselevel * (remainder-index) / remainder);
             };
 
             // Constants.
@@ -31,19 +31,23 @@ light:
 
             for (int i = 0; i < leds; i++) {
               // Base glow.
-              int32_t baseglow = 200.f*sinf(baselength*i)+55.5f;
-              int32_t r = baseglow;
-              int32_t g = baseglow;
-              int32_t b = baseglow;
+              auto baseglow = (sin16_c(i*32767/leds)>>7) + 55;
+              if (baseglow > 255) {
+                baseglow = 255;
+              }
+              auto r = baseglow;
+              auto g = baseglow;
+              auto b = baseglow;
 
-              // Additive blue wave.
-              //int32_t wavei = 120.f*sinf(wavelength*i + waveoffset)+0.5f;
-              //if (wavei < 0) {
-              //  wavei = 0;
-              //}
-              int32_t wavei = impulse((now/50 + i)%256);
+              // Overpowering blue wave.
+              auto wavei = impulse((now/50 + i)%256);
               b += wavei;
               if (b > 255) {
+                // The more b overflows, the more r and g are reduced at 50%.
+                r = g = (255+128)-(b/2);
+                if (r > 255) {
+                  r = b = 0;
+                }
                 b = 255;
               }
               it[i].set(Color(r, g, b));

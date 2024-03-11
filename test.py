@@ -32,7 +32,7 @@ EXPECTATIONS = {
       "30s_count_down": b'\r00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00 00ff00\n',
 		},
     "waves.yaml": {
-      "waves": b'\r373740 404052 494964 525276 5b5b88 64649a 6c6cab 7575bd 7d7dce 8686e0 8e8ef2 9696fa 9e9eff a5a5ff adadff b4b4ff bbbbff c1c1ff c8c8ff ceceff d3d3ff d9d9ff dedeff e3e3ff e7e7ff ebebff efefff f2f2ff f5f5ff f8f8ff fafaff fcfcff fdfdff fefeff ffffff ffffff ffffff fefeff fdfdff fcfcff fafaff f8f8ff f5f5ff f2f2ff efefff ebebff e7e7ff e3e3ff dedeff d9d9ff d3d3ff ceceff c8c8ff c1c1ff bbbbff b4b4f9 adadf1 a5a5e8 9e9ee0 9696d7 8e8ecf 8686c6 7d7dbc 7575b3 6c6ca9 6464a0 5b5b96 52528c 494983 404079\n',
+      "waves": b'\r373740 424254 4d4d68 58587c 636390 6f6fa5 7a7ab9 8585cd 9090e1 9b9bf5 fbfbff f6f6ff f1f1ff ececff e7e7ff e3e3ff dedeff dadaff d6d6ff d2d2ff cfcfff ceceff cfcfff cfcfff d0d0ff d0d0ff d1d1ff d1d1ff d1d1ff d2d2ff d2d2ff d3d3ff d3d3ff d4d4ff d4d4ff d5d5ff d5d5ff d5d5ff d6d6ff d6d6ff d7d7ff d7d7ff d8d8ff d8d8ff d8d8ff d9d9ff d9d9ff dadaff dadaff dbdbff dcdcff e0e0ff e4e4ff e9e9ff ededff f2f2ff f7f7ff fcfcff b9b9fb afaff0 a5a5e6 9b9bdb 9090cf 8585c3 7a7ab7 6f6fab 63639e 585892 4d4d87 42427b\n',
     },
 }
 
