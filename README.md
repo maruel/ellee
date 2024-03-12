@@ -16,12 +16,18 @@ iteration!
 
 Crank these animations! ⏩
 
+
 ## Prerequisites
 
-- On linux or Windows under WSL, run: `sudo apt install g++`
-- On macOS, install Xcode.
+- macOS
+  - Install Xcode
+  - Install python dependencies with: `./setup.sh; source venv/bin/activate`
+- Windows
+  - Run: `setup.bat`
+- Linux or Windows under WSL
+  - Run: `sudo apt install g++`
+  - Install python dependencies with: `./setup.sh; source venv/bin/activate`
 
-Install python dependencies with: `./setup.sh; source venv/bin/activate`
 
 ## Usage
 
@@ -51,4 +57,4 @@ Ctrl-C out to stop the animation.
 
 Explore the [samples/](samples/) directory for ideas how to make the best use of
 this tool. ellee tolerates underspecified effect (e.g.
-[`print_then_exit.yaml`](samples/print_then_exit.yaml)) for quicker iteration.
+[`printf_then_exit.yaml`](samples/printf_then_exit.yaml)) for quicker iteration.

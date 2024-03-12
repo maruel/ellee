@@ -10,9 +10,8 @@ jobs:
     runs-on: "${{matrix.os}}"
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-14]
+        os: [ubuntu-latest, macos-14, windows-latest]
         # macos-latest (currently macos-13) doesn't contain Xcode 15.
-        # windows-latest gets a compilation error because net/if.h is missing.
     defaults:
       run:
         shell: bash
@@ -23,17 +22,18 @@ jobs:
     - name: checkout esphome
       uses: actions/checkout@v4
       with:
-        repository: esphome/esphome
+        repository: maruel/esphome
         path: esphome
+        ref: win32_host
     - uses: actions/setup-python@v5
       with:
         python-version: '3.12'
     - name: ./setup.sh
       if: runner.os != 'Windows'
       run: ./ellee/setup.sh
-    - name: pip3 install
+    - name: setup.bat
       if: runner.os == 'Windows'
-      run: pip3 install -r ellee/requirements.txt
+      run: ./ellee/setup.bat
     - name: ./test.py
       run: |
         if [ "$RUNNER_OS" != "Windows" ]; then
