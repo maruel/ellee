@@ -16,6 +16,13 @@ iteration!
 
 Crank these animations! ⏩
 
+## Prerequisites
+
+- On linux or Windows under WSL, run: `sudo apt install g++`
+- On macOS, install Xcode.
+
+Install python dependencies with: `./setup.sh; source venv/bin/activate`
+
 ## Usage
 
 ellee requires a esphome.git checkout to get the C++ source files to build your

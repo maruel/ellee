@@ -11,8 +11,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-14]
-        # macos-13 (currently the default) doesn't contain Xcode 15.
-        #os: [ubuntu-latest, macos-latest]
+        # macos-latest (currently macos-13) doesn't contain Xcode 15.
+        # windows-latest gets a compilation error because net/if.h is missing.
+    defaults:
+      run:
+        shell: bash
     steps:
     - uses: actions/checkout@v4
       with:
@@ -26,8 +29,14 @@ jobs:
       with:
         python-version: '3.12'
     - name: ./setup.sh
+      if: runner.os != 'Windows'
       run: ./ellee/setup.sh
+    - name: pip3 install
+      if: runner.os == 'Windows'
+      run: pip3 install -r ellee/requirements.txt
     - name: ./test.py
       run: |
-        source ./ellee/venv/bin/activate
+        if [ "$RUNNER_OS" != "Windows" ]; then
+          source ./ellee/venv/bin/activate
+        fi
         ./ellee/test.py
