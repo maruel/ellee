@@ -180,7 +180,7 @@ def generate_effect(
       os.path.join(esphome, "esphome/core/scheduler.cpp"),
   ]
   try:
-    subprocess.check_call(["g++", "-ggdb", "-o", exe, "-DUSE_HOST", "-I.", "-I" + esphome] + files)
+    subprocess.check_call(["g++", "-std=c++17", "-ggdb", "-o", exe, "-DUSE_HOST", "-I.", "-I" + esphome] + files)
   except subprocess.CalledProcessError as e:
     print("Compilation failed:", e, file=sys.stderr)
     return False

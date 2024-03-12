@@ -4,21 +4,29 @@ light:
     effects:
       - addressable_lambda:
           lambda: |-
-            // See impulse.yaml for more details.
-            auto impulse = [](uint16_t index, uint16_t max = 100, uint16_t attack = 10, uint16_t sustain = 10, uint16_t release = 80, uint16_t releaselevel = 30, uint16_t remainder = 156) {
-              if (index < attack) {
-                return uint16_t((index+1) * max / (attack+1));
+            // I encourage you to copy-paste the following and adapt to your needs!
+
+            // A fast linear implementation of a generic multi-point impulse
+            // envelope to use in an animation as a lambda. A point of (0, 0) is
+            // assumed at the beginning.
+            // Credit: Marc-Antoine Ruel
+            struct point { uint16_t duration, value; };
+            auto render = [](uint16_t index, const auto& points) {
+              // Linear interpolation between two points.
+              constexpr auto twopointsinterpolation = [](int32_t offset, int32_t total, int32_t v1, int32_t v2) {
+                constexpr auto divRoundClosest = [](int32_t n, int32_t d) {
+                  return ((n < 0) == (d < 0)) ? ((n + d/2)/d) : ((n - d/2)/d);
+                };
+                return uint16_t(v1 + divRoundClosest((v2-v1)*offset, total));
+              };
+              for (int i = 0; i < sizeof(points)/sizeof(points[0]); i++) {
+                const auto duration = points[i].duration;
+                if (index < duration) {
+                  return twopointsinterpolation(index, duration, i ? points[i-1].value : 0, points[i].value);
+                }
+                index -= duration;
               }
-              index -= attack;
-              if (index < sustain) {
-                return max;
-              }
-              index -= sustain;
-              if (index < release) {
-                return (uint16_t)(((max-releaselevel) * (release-index) / release) + releaselevel);
-              }
-              index -= release;
-              return (uint16_t)(releaselevel * (remainder-index) / remainder);
+              return uint16_t(0);
             };
 
             // Constants.
@@ -28,6 +36,7 @@ light:
             const auto wavelength = 0.3f * M_PIf/leds;
             const auto waveoffset = wavefreq * now;
             const auto baselength = M_PIf/leds;
+            const point impulse[] = {{0, 10}, {10, 100}, {10, 100}, {80, 30}, {156, 1}};
 
             for (int i = 0; i < leds; i++) {
               // Base glow.
@@ -40,7 +49,7 @@ light:
               auto b = baseglow;
 
               // Overpowering blue wave.
-              auto wavei = impulse((now/50 + i)%256);
+              auto wavei = render((now/50 + i)%256, impulse);
               b += wavei;
               if (b > 255) {
                 // The more b overflows, the more r and g are reduced at 50%.

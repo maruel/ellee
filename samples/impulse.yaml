@@ -4,69 +4,39 @@ light:
     default_transition_length: 0s
     effects:
       - addressable_lambda:
-          name: "Impulse"
+          name: "Generic linear multi-points impulse"
           lambda: |-
-            // A linear approximation of an ASRD (attack + sustain + release
-            // + decay) impulse to use in an animation as a lambda.
-            auto impulse = [](uint16_t index, uint16_t max = 255, uint16_t attack = 10, uint16_t sustain = 10, uint16_t release = 80, uint16_t releaselevel = 30, uint16_t remainder = 156) {
-              if (index < attack) {
-                return uint16_t((index+1) * max / (attack+1));
+            // I encourage you to copy-paste the following and adapt to your needs!
+
+            // A fast linear implementation of a generic multi-point impulse
+            // envelope to use in an animation as a lambda. A point of (0, 0) is
+            // assumed at the beginning.
+            // Credit: Marc-Antoine Ruel
+            struct point { uint16_t duration, value; };
+            auto render = [](uint16_t index, const auto& points) {
+              // Linear interpolation between two points.
+              constexpr auto twopointsinterpolation = [](int32_t offset, int32_t total, int32_t v1, int32_t v2) {
+                constexpr auto divRoundClosest = [](int32_t n, int32_t d) {
+                  return ((n < 0) == (d < 0)) ? ((n + d/2)/d) : ((n - d/2)/d);
+                };
+                return uint16_t(v1 + divRoundClosest((v2-v1)*offset, total));
+              };
+              for (int i = 0; i < sizeof(points)/sizeof(points[0]); i++) {
+                const auto duration = points[i].duration;
+                if (index < duration) {
+                  return twopointsinterpolation(index, duration, i ? points[i-1].value : 0, points[i].value);
+                }
+                index -= duration;
               }
-              index -= attack;
-              if (index < sustain) {
-                return max;
-              }
-              index -= sustain;
-              if (index < release) {
-                return (uint16_t)(((max-releaselevel) * (release-index) / release) + releaselevel);
-              }
-              index -= release;
-              return (uint16_t)(releaselevel * (remainder-index) / remainder);
+              return uint16_t(0);
             };
 
             const auto leds = it.size();
+            // A linear implementation of an AHDR (attack, hold, decay, release) impulse
+            // envelope to use in an animation as a lambda.
+            // Read more on this subject at https://en.wikipedia.org/wiki/Envelope_(music).
+            const point impulse[] = {{0, 10}, {10, 255}, {10, 255}, {80, 30}, {156, 1}};
             for (int i = 0; i < leds; i++) {
-              auto v = impulse(i);
+              auto v = render(i, impulse);
               it[i].set(Color(v, v, v));
-            }
-      - addressable_lambda:
-          name: "Precomputed impulse"
-          lambda: |-
-            // Precalculate a linear approximation of an ASRD (attack + sustain
-            // + release + decay) impulse to use in an animation as a
-            // table lookup. Settings:
-            const int max = 255;
-            const int attack = 10;
-            const int sustain = 10;
-            const int release = 80;
-            const int releaselevel = 30;
-            static uint8_t impulse[256];
-            // Do not use initial_run otherwise this would be recalculated every
-            // single time this effect is started.
-            if (impulse[1] == 0) {
-              const auto remainder = sizeof(impulse) - attack - sustain - release;
-              for (int i = 0; i < sizeof(impulse); i++) {
-                auto v = i;
-                if (v < attack) {
-                  impulse[i] = (v+1) * max / (attack+1);
-                  continue;
-                }
-                v -= attack;
-                if (v < sustain) {
-                  impulse[i] = max;
-                  continue;
-                }
-                v -= sustain;
-                if (v < release) {
-                  impulse[i] = ((max-releaselevel) * (release-v) / release) + releaselevel;
-                  continue;
-                }
-                v -= release;
-                impulse[i] = releaselevel * (remainder-v) / remainder;
-              }
-            }
-
-            const auto leds = it.size();
-            for (int i = 0; i < leds; i++) {
-              it[i].set(Color(impulse[i], impulse[i], impulse[i]));
             }
