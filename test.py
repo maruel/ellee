@@ -56,6 +56,8 @@ def run(esphome, name, effects):
     # Make sure the generated source files and executables match the
     # expectations.
     want = set(list(effects) + list(e + ".cc" for e in effects))
+    if sys.platform == "darwin":
+      want |= set(e + ".dSYM" for e in effects)
     got = set(os.listdir(tmpdir))
     if want != got:
       print(f"Unexpected effects found in {name}", file=sys.stderr)
