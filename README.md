@@ -16,6 +16,7 @@ iteration!
 
 Crank these animations! ⏩
 
+![demo.gif](demo.gif)
 
 ## Prerequisites
 
